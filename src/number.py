@@ -1,5 +1,4 @@
 from enum import Enum
-from copy import deepcopy
 
 # A dictionary mapping characters representing digits ('0' to '9' and 'A' to 'Z')
 # to their corresponding integer values from 0 to 35.
@@ -10,6 +9,10 @@ DIGIT_TO_INT = {chr(i + ord('0')) if i < 10 else chr(i - 10 + ord('A')) : i for 
 INT_TO_DIGIT = {i : chr(i + ord('0')) if i < 10 else chr(i - 10 + ord('A')) for i in range(36)}
 
 class Repr(Enum):
+    """
+    How a number is represented aside from the numbers base.
+    """
+
     SIGN_MAGNITUDE = 0,
     DIMINSHED_RADIX_COMPLEMENT = 1,
     RADIX_COMPLEMENT = 2
@@ -23,9 +26,11 @@ class Number:
         self.base = base
         self.repr = repr
 
-    # Returns a number with the same decimal value, but
-    # in a different specified base and representation.
     def convert_to(self, base: int, repr: Repr) -> 'Number':
+        """
+        Returns a number with the same value, but
+        in a different specified base and representation.
+        """
 
         if (self.base, self.repr) == (base, repr):
             return self
@@ -47,22 +52,24 @@ class Number:
 
         return number if not negative else number.complement()
     
-    # Returns the complement of this number.
     def complement(self) -> 'Number':
+        """
+        Returns the complement of this number.
+        """
 
         if self.repr == Repr.SIGN_MAGNITUDE:
             return
         
-        comp = deepcopy(self)
+        comp = Number('+', self.base, self.repr)
 
         # Complement all of our digits. We do this by subtracting
         # the digit at position i from the highest digit.
-        for i in range(len(comp.digits)):
-            comp[i] = comp.base - comp[i] - 1
+        for digit in self.digits:
+            comp.digits.append(comp.base - digit - 1)
 
         # Add 1 to get the right number in radix complement.
         if comp.repr == Repr.RADIX_COMPLEMENT:
-            comp = add(comp, Number("01", comp.base, comp.repr), comp.base, comp.repr)
+            comp = add(comp, Number('01', comp.base, comp.repr), comp.base, comp.repr)
         
         return comp
 
@@ -84,7 +91,7 @@ class Number:
         # more than one digit to determine if it's a negative number.
         # eg. 314, base 7 - positive.
         # eg. 352, base 7 - negative.
-        # ..333..333, base 7 is undefined.
+        # ..333..333, base 7 - undefined.
         for digit in reversed(self.digits):
 
             if digit >= lowest_neg_digit:
@@ -92,9 +99,11 @@ class Number:
             elif digit < mid_point:
                 return False
 
-    # Remove excess digits so this number is represented
-    # with the least amount of digits.
     def strip(self) -> None:
+        """
+        Remove excess digits so this number is represented
+        with the least amount of digits.
+        """
 
         i = len(self.digits) - 1
         mid_point = self.base // 2
@@ -112,7 +121,6 @@ class Number:
                 break
 
             i -= 1
-
 
     def __str__(self) -> str:
         return ('-' if self.sign == -1 else '') + ''.join([INT_TO_DIGIT[i] for i in reversed(self.digits)])
@@ -137,6 +145,17 @@ class Number:
 
         return result
 
+    def __eq__(self, other):
+        
+        if isinstance(other, Number):
+            return int(self) == int(other)
+        
+        return False
+    
+    def __ne__(self, other):
+        
+        return not self.__eq__(other)
+
     def __getitem__(self, index: int) -> int:
 
         # Determine the leading digits.
@@ -154,7 +173,7 @@ class Number:
         self.digits[index] = value
     
 def add(x: Number, y: Number, base: int, repr: Repr, limit: int = 1e9) -> Number:
-
+    
     result = Number("+", base, repr)
     x = x.convert_to(base, repr)
     y = y.convert_to(base, repr)
@@ -169,7 +188,7 @@ def add(x: Number, y: Number, base: int, repr: Repr, limit: int = 1e9) -> Number
     result.strip()
 
     if repr == Repr.DIMINSHED_RADIX_COMPLEMENT and carry != 0:
-        result = add(result, Number("01", base, repr), base, repr, limit)
+        result = add(result, Number('01', base, repr), base, repr, limit)
 
     return result
 
@@ -179,10 +198,12 @@ def sub(x: Number, y: Number, base: int, repr: Repr, limit: int = 1e9) -> Number
     x = x.convert_to(base, repr)
     y = y.convert_to(base, repr)
 
+    # Subtracting with a number in systems of complements is 
+    # the same as adding it's complement.
     if repr != Repr.SIGN_MAGNITUDE:
         return add(x, y.complement(), base, repr, limit)
      
-    result = Number("+", base, repr)
+    result = Number('0', base, repr)
     limit = min(limit, max(len(x.digits), len(y.digits)))
     borrow = 0
 
@@ -196,12 +217,3 @@ def sub(x: Number, y: Number, base: int, repr: Repr, limit: int = 1e9) -> Number
         result.digits.append(diff % base)
 
     return result
-    
-
-
-num1 = Number("AF350", 16, Repr.SIGN_MAGNITUDE)
-num2 = Number("FB2B9", num1.base, num1.repr)
-
-print(add(num1, num2, num1.base, num1.repr))
-
-
