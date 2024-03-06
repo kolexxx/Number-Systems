@@ -1,32 +1,45 @@
 from enum import Enum
+from copy import deepcopy
 
-# A dictionary mapping characters representing digits ('0' to '9' and 'A' to 'Z')
-# to their corresponding integer values from 0 to 35.
 DIGIT_TO_INT = {chr(i + ord('0')) if i < 10 else chr(i - 10 + ord('A')) : i for i in range(36)}
+"""
+A dictionary mapping characters representing digits ('0' to '9' and 'A' to 'Z')
+to their corresponding integer values from 0 to 35.
+"""
 
-# A dictionary mapping integer values from 0 to 35 to 
-# their corresponding characters representing digits ('0' to '9' and 'A' to 'Z').
 INT_TO_DIGIT = {i : chr(i + ord('0')) if i < 10 else chr(i - 10 + ord('A')) for i in range(36)}
+"""
+A dictionary mapping integer values from 0 to 35 to 
+their corresponding characters representing digits ('0' to '9' and 'A' to 'Z').
+"""
 
 class Repr(Enum):
     """
     How a number is represented aside from the numbers base.
     """
 
-    SIGN_MAGNITUDE = 0,
-    DIMINSHED_RADIX_COMPLEMENT = 1,
-    RADIX_COMPLEMENT = 2
+    SM = 0,
+    """Sign and magnitude."""
+    DRC = 1,
+    """Diminshed radix complement."""
+    RC = 2
+    """Radix complement"""
 
 class Number:
 
-    def __init__(self, number: str, base: int, repr: Repr):
+    def __init__(self, number, base: int, repr: Repr):
 
-        self.sign = -1 if number[0] == '-' else 1
-        self.digits = [DIGIT_TO_INT[c] for c in reversed(number.strip(' -+'))]
         self.base = base
         self.repr = repr
 
-    def convert_to(self, base: int, repr: Repr) -> 'Number':
+        if isinstance(number, str):
+            self._digits_from_str(number)
+        elif isinstance(number, int):
+            self._digits_from_int(number)
+        else:
+            raise ValueError('Invalid type for number. It must be a string or an int.')
+
+    def convert_to(self, base: int, repr: Repr) -> None:
         """
         Returns a number with the same value, but
         in a different specified base and representation.
@@ -35,55 +48,52 @@ class Number:
         if (self.base, self.repr) == (base, repr):
             return self
         
-        magnitude = abs(int(self))
-        negative = self.is_negative()
-        number = Number("+", base, repr)
+        if self.base == base:
 
-        while magnitude != 0:
-            number.digits.append(magnitude % base)
-            magnitude //= base
+            # A positive number is represented the same way
+            # in all of our systems.
+            if self.sign == 1 and self.leading_digit() == 0:
+                return
+            
+            if self.repr == Repr.DRC and repr == Repr.RC:
+                self += 1
+                return
 
-        if repr == Repr.SIGN_MAGNITUDE:
-            number.sign = -1 if negative else 1
-            return number
+        # The most straight-forward way of conversion
+        # is first converting the number to an unsigned
+        # decimal number , then to our desired base and representation.
+        self.base = base
+        self.repr = repr
+        self._digits_from_int(int(self))
 
-        number.digits.append(0)
-        number.strip()
-
-        return number if not negative else number.complement()
-    
     def complement(self) -> 'Number':
         """
         Returns the complement of this number.
         """
 
-        if self.repr == Repr.SIGN_MAGNITUDE:
+        if self.repr == Repr.SM:
             return
         
-        comp = Number('+', self.base, self.repr)
-
-        # Complement all of our digits. We do this by subtracting
-        # the digit at position i from the highest digit.
-        for digit in self.digits:
-            comp.digits.append(comp.base - digit - 1)
-
-        # Add 1 to get the right number in radix complement.
-        if comp.repr == Repr.RADIX_COMPLEMENT:
-            comp = add(comp, Number('01', comp.base, comp.repr), comp.base, comp.repr)
+        comp = deepcopy(self)
+        comp._complement_self()
+        comp.sign *= -1
         
         return comp
 
+    def leading_digit(self) -> int:
+        """
+        Returns the leading digit of this number. Depending on the
+        number's system, it could 0 or the highest digit.
+        """
 
-    def is_negative(self) -> bool:
-
-        if self.repr == Repr.SIGN_MAGNITUDE:
-            return self.sign == -1
+        if self.repr == Repr.SM:
+            return 0
         
         # In systems of complements, numbers are negative if the most
         # significant digit is a negative one. The first (base // 2) digits
         # are positive, the rest are negative. Odd bases have a neutral digit
         # which is equal to (base // 2) and we can't determine the sign if it's
-        # the most significant bit.
+        # the most significant digit.
         mid_point = self.base // 2
         lowest_neg_digit = mid_point + 1 if self.base % 2 == 1 else mid_point
 
@@ -95,9 +105,9 @@ class Number:
         for digit in reversed(self.digits):
 
             if digit >= lowest_neg_digit:
-                return True
+                return self.base - 1
             elif digit < mid_point:
-                return False
+                return 0
 
     def strip(self) -> None:
         """
@@ -111,16 +121,69 @@ class Number:
 
         while i >= 1:
 
-            if self.repr == Repr.SIGN_MAGNITUDE and self[i] == 0:
+            if self.repr == Repr.SM and self[i] == 0:
                 self.digits.pop()
-            elif self.repr != Repr.SIGN_MAGNITUDE and self[i] == self.base - 1 and self[i-1] >= lowest_neg_digit:
+            elif self.repr != Repr.SM and self[i] == self.base - 1 and self[i-1] >= lowest_neg_digit:
                 self.digits.pop()
-            elif self.repr != Repr.SIGN_MAGNITUDE and self[i] == 0 and self[i-1] < mid_point:
+            elif self.repr != Repr.SM and self[i] == 0 and self[i-1] < mid_point:
                 self.digits.pop()
             else:
                 break
 
             i -= 1
+
+    def _digits_from_str(self, str: str) -> None:
+        """
+        Constructs the digits list from a string.
+        """
+
+        self.sign = -1 if str[0] == '-' else 1
+        self.digits = [DIGIT_TO_INT[c] for c in reversed(str.strip(' -+'))]
+
+        if self.sign == -1 and self.repr != Repr.SM:
+            self._complement_self()
+
+    def _digits_from_int(self, int: int) -> None:
+        """
+        Constructs the digits list from an integer.
+        """
+        if int == 0:
+            self.sign = 1
+            self.digits = [0]
+            return
+        
+        self.sign = 1
+        self.digits = []
+
+        if int < 0:
+            self.sign = -1
+            int *= -1          
+
+        while int != 0:
+            self.digits.append(int % self.base)
+            int //= self.base
+
+        if self.repr == Repr.SM:
+            return
+        
+        # Add a leading zero to make sure this number is positive.
+        if self.leading_digit() == self.base - 1:
+            self.digits.append(0)
+
+        if self.sign == -1:
+            self._complement_self()           
+
+    def _complement_self(self) -> None:
+        """
+        Complement this number in place.
+        """
+        self.sign *= -1
+
+        for i in range(len(self.digits)):
+            self[i] = self.base - 1 - self[i]
+         
+        if self.repr == Repr.RC:
+            self += 1
 
     def __str__(self) -> str:
         return ('-' if self.sign == -1 else '') + ''.join([INT_TO_DIGIT[i] for i in reversed(self.digits)])
@@ -134,14 +197,45 @@ class Number:
             result += digit * multiplier
             multiplier *= self.base
 
-        if self.repr == Repr.SIGN_MAGNITUDE:
+        if self.repr == Repr.SM:
             return result * self.sign
 
-        if self.is_negative():
+        if self.leading_digit() == self.base - 1:
             result -= multiplier
 
-            if self.repr == Repr.DIMINSHED_RADIX_COMPLEMENT:
+            if self.repr == Repr.DRC:
                 result += 1
+
+        return result
+
+    def __iadd__(self, other):
+        
+        if isinstance(other, Number):
+
+            other = other.convert_to(self.base, self.repr)
+            limit = max(len(self.digits), len(other.digits)) + 1
+            result = [0] * limit
+            carry = 0
+
+            for i in range(limit):
+                sum = self[i] + other[i] + carry
+                carry = sum // self.base
+                result[i] = sum % self.base
+
+            self.digits = result
+            self.strip()
+
+            if self.repr == Repr.DRC and carry != 0:
+                self += 1
+        else:
+            self += Number(other, self.base, self.repr)
+
+        return self
+
+    def __add__(self, other):
+
+        result = deepcopy(self)
+        result += other
 
         return result
 
@@ -158,62 +252,28 @@ class Number:
 
     def __getitem__(self, index: int) -> int:
 
-        # Determine the leading digits.
         if index >= len(self.digits):
-
-            if self.repr == Repr.SIGN_MAGNITUDE:
-                return 0
-            
-            # Negative numbers in system of complemenets have leading highest digits.
-            return self.base - 1 if self.is_negative() else 0
+            return self.leading_digit()
 
         return self.digits[index]
     
     def __setitem__(self, index: int, value: int) -> None:
         self.digits[index] = value
     
-def add(x: Number, y: Number, base: int, repr: Repr, limit: int = 1e9) -> Number:
+def add(x: Number, y: Number, base: int, repr: Repr) -> Number:
     
-    result = Number("+", base, repr)
-    x = x.convert_to(base, repr)
-    y = y.convert_to(base, repr)
-    limit = min(limit, max(len(x.digits), len(y.digits)) + 1)
-    carry = 0
-
-    for i in range(limit):
-        sum = x[i] + y[i] + carry
-        carry = sum // base
-        result.digits.append(sum % base)
-
-    result.strip()
-
-    if repr == Repr.DIMINSHED_RADIX_COMPLEMENT and carry != 0:
-        result = add(result, Number('01', base, repr), base, repr, limit)
-
-    return result
+    return x.convert_to(base, repr) + y.convert_to(base, repr)
 
 
-def sub(x: Number, y: Number, base: int, repr: Repr, limit: int = 1e9) -> Number:
+def sub(x: Number, y: Number, base: int, repr: Repr) -> Number:
 
     x = x.convert_to(base, repr)
     y = y.convert_to(base, repr)
 
     # Subtracting with a number in systems of complements is 
     # the same as adding it's complement.
-    if repr != Repr.SIGN_MAGNITUDE:
-        return add(x, y.complement(), base, repr, limit)
+    if repr != Repr.SM:
+        return add(x, y.complement(), base, repr)
      
     result = Number('0', base, repr)
-    limit = min(limit, max(len(x.digits), len(y.digits)))
     borrow = 0
-
-    if int(y) > int(x):
-        x, y = y, x
-        result.sign = '-'
-
-    for i in range(limit):
-        diff = x[i] - y[i] - borrow
-        borrow = 1 if diff < 0 else 0
-        result.digits.append(diff % base)
-
-    return result
