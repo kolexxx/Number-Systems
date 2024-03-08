@@ -46,16 +46,25 @@ class Number:
         """
 
         if (self.base, self.repr) == (base, repr):
-            return self
+            return
         
         if self.base == base:
+
+            prev = self.repr
+            self.repr = repr
 
             # A positive number is represented the same way
             # in all of our systems.
             if self.sign == 1 and self.leading_digit() == 0:
                 return
             
-            if self.repr == Repr.DRC and repr == Repr.RC:
+            # We are converting a negative number to a system 
+            # of complements, so we should complement this number.
+            if self.sign == -1 and prev == Repr.SM:
+                self._complement_self()
+                return
+            
+            if prev == Repr.DRC and repr == Repr.RC:
                 self += 1
                 return
 
@@ -108,6 +117,8 @@ class Number:
                 return self.base - 1
             elif digit < mid_point:
                 return 0
+            
+        return mid_point
 
     def strip(self) -> None:
         """
@@ -147,6 +158,7 @@ class Number:
         """
         Constructs the digits list from an integer.
         """
+
         if int == 0:
             self.sign = 1
             self.digits = [0]
@@ -167,7 +179,7 @@ class Number:
             return
         
         # Add a leading zero to make sure this number is positive.
-        if self.leading_digit() == self.base - 1:
+        if self.leading_digit() != 0:
             self.digits.append(0)
 
         if self.sign == -1:
@@ -177,6 +189,7 @@ class Number:
         """
         Complement this number in place.
         """
+
         self.sign *= -1
 
         for i in range(len(self.digits)):
@@ -197,22 +210,21 @@ class Number:
             result += digit * multiplier
             multiplier *= self.base
 
-        if self.repr == Repr.SM:
-            return result * self.sign
-
+        # We are working with a negative number in
+        # systems of complements.
         if self.leading_digit() == self.base - 1:
             result -= multiplier
 
             if self.repr == Repr.DRC:
                 result += 1
 
-        return result
+        return result * self.sign
 
     def __iadd__(self, other):
         
         if isinstance(other, Number):
 
-            other = other.convert_to(self.base, self.repr)
+            other.convert_to(self.base, self.repr)
             limit = max(len(self.digits), len(other.digits)) + 1
             result = [0] * limit
             carry = 0
@@ -238,6 +250,20 @@ class Number:
         result += other
 
         return result
+    
+    def __isub__(self, other):
+
+        if isinstance(other, Number):
+             
+            other.convert_to(self.base, self.repr)
+
+            if self.repr != Repr.SM:
+                self += -other
+
+        else:
+            self -= Number(other, self.base, self.repr)
+
+        return self   
 
     def __eq__(self, other):
         
@@ -250,6 +276,13 @@ class Number:
         
         return not self.__eq__(other)
 
+    def __neg__(self):
+
+        self._complement_self()
+        self.sign *= -1
+
+        return self
+    
     def __getitem__(self, index: int) -> int:
 
         if index >= len(self.digits):
@@ -259,11 +292,6 @@ class Number:
     
     def __setitem__(self, index: int, value: int) -> None:
         self.digits[index] = value
-    
-def add(x: Number, y: Number, base: int, repr: Repr) -> Number:
-    
-    return x.convert_to(base, repr) + y.convert_to(base, repr)
-
 
 def sub(x: Number, y: Number, base: int, repr: Repr) -> Number:
 
@@ -273,7 +301,7 @@ def sub(x: Number, y: Number, base: int, repr: Repr) -> Number:
     # Subtracting with a number in systems of complements is 
     # the same as adding it's complement.
     if repr != Repr.SM:
-        return add(x, y.complement(), base, repr)
+        return
      
     result = Number('0', base, repr)
     borrow = 0
