@@ -1,10 +1,12 @@
 # Number-Systems
 Python package to convert between different bases, work in methods of complements and show a step by step instruction to perfrom arithmetic. 
 
-The intented use of this package is to aid students taking Digital Electronics or Computer Engineering courses by showing them how to perform arithmetic operations in different radices.
+The intented use of this package is to aid students taking Digital Electronics or Computer Engineering courses by showing them how to perform arithmetic operations in 
+different radices.
+
 # Example usage
 ```python
-from src.number import *
+from numsys import Number, Repr
 
 x = Number(-45, 2, Repr.SM) # Convert an integer to a given base.
 print(x) # -101101
