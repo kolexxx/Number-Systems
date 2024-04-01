@@ -29,20 +29,20 @@ class Number:
 
     MAX_DIGITS = -1
     """
-    How many digits are used to represent a number.
+    How many digits are allowed to represent a number.
     """
 
-    def __init__(self, number, base: int, comp: Comp = Comp.NONE):
+    def __init__(self, input, base: int, comp: Comp = Comp.NONE):
 
         self._base = base
         self._comp = comp
         
-        if isinstance(number, str):
-            self._digits_from_str(number)
-        elif isinstance(number, int):
-            self._digits_from_int(number)
+        if isinstance(input, str):
+            self._digits_from_str(input)
+        elif isinstance(input, int):
+            self._digits_from_int(input)
         else:
-            raise ValueError('Invalid type for number. It must be a string or an int.')
+            raise ValueError('Invalid input. It must be a string or an integer.')
 
     def convert_to(self, base: int, comp: Comp) -> None:
         """

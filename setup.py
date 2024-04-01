@@ -1,14 +1,14 @@
-from setuptools import setup, find_packages
+from setuptools import setup
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setup(
-    name="number-systems",
+    name="numsys-math",
     version="1.0.0",
     author="Kosta Novosel",
     author_email="novoselkosta@gmail.com",
-    description="A short description of your package",
+    description="Convert between number systems and perform arithmetic.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/kolexxx/Number-Systems",

@@ -1,4 +1,4 @@
-# Number-Systems
+# Number Systems
 Python package to convert between different bases, work in methods of complements and show a step by step instruction to perfrom arithmetic. 
 
 The intented use of this package is to aid students taking Digital Electronics or Computer Engineering courses by showing them how to perform arithmetic operations in different number systems.
