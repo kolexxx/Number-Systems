@@ -1,5 +1,6 @@
 from enum import Enum
 from copy import deepcopy
+import re
 
 DIGIT_TO_INT = {chr(i + ord('0')) if i < 10 else chr(i - 10 + ord('A')) : i for i in range(36)}
 """
@@ -47,7 +48,7 @@ class Number:
     def convert_to(self, base: int, comp: Comp) -> None:
         """
         Returns a number with the same value, but
-        in a different specified base and representation.
+        in a different specified base and complement.
         """
 
         if (self._base, self._comp) == (base, comp):
@@ -104,8 +105,8 @@ class Number:
 
     def leading_digit(self) -> int:
         """
-        Returns the leading digit of this number. Depending on the
-        number's system, it could 0 or the highest digit.
+        Returns the leading digit of this number. Depending on if
+        we're working with complements, it could 0 or the highest digit.
         """
 
         if self._comp == Comp.NONE:
