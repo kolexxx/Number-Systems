@@ -12,6 +12,13 @@ class TestNumber(unittest.TestCase):
         num2.convert_to(16, Comp.RC)
         self.assertEqual(str(num2), '0')
 
+        num3 = Number('84F', 16, Comp.DRC)
+        num3.convert_to(2, Comp.RC)
+        self.assertEqual(str(num3), '100001010000')
+
+        num4 = Number(-83, 7, Comp.DRC)
+        self.assertEqual(str(num4), '520')
+
     def test_complement(self):
         
         num1 = Number('01101', 2, Comp.DRC)

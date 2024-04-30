@@ -44,7 +44,7 @@ class Number:
         else:
             raise ValueError('Invalid input. It must be a string or an integer.')
 
-    def convert_to(self, base: int, comp: Comp) -> None:
+    def convert_to(self, base: int, comp: Comp = Comp.NONE) -> None:
         """
         Returns a number with the same value, but
         in a different specified base and complement.

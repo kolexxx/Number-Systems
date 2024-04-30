@@ -1,4 +1,3 @@
-
 [build-system]
 
 requires = ["setuptools"]
@@ -28,6 +27,3 @@ classifiers = [
 "Homepage" = "https://github.com/kolexxx/Number-Systems"
 "Bug Reports" = "https://github.com/kolexxx/Number-Systems/issues"
 "Source" = "https://github.com/kolexxx/Number-Systems"
-
-[project.scripts]
-sample = "numsys:main"
