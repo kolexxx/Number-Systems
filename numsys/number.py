@@ -65,6 +65,7 @@ class Number:
 
             if prev == Comp.NONE:
 
+                # We need to make sure this number's magnitude is still positive.
                 if self.leading_digit() != 0:
                     self._digits.append(0)
             
@@ -367,3 +368,6 @@ class Number:
 
     def __len__(self) -> int:
         return len(self._digits)
+    
+    def __iter__(self):
+        return iter(self._digits)
