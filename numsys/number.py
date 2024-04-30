@@ -1,6 +1,5 @@
 from enum import Enum
 from copy import deepcopy
-import re
 
 DIGIT_TO_INT = {chr(i + ord('0')) if i < 10 else chr(i - 10 + ord('A')) : i for i in range(36)}
 """
@@ -208,14 +207,18 @@ class Number:
             self._sign *= -1
             return
 
-        for i in range(len(self._digits)):
+        for i in range(len(self)):
             self[i] = self._base - 1 - self[i]
          
         if self._comp == Comp.RC:
             self += 1
 
-    def __str__(self) -> str:
-        return ('-' if self._sign == -1 else '') + ''.join([INT_TO_DIGIT[i] for i in reversed(self._digits)])
+    def __str__(self, limit: int = 0) -> str:
+
+        if limit == 0:
+            limit = len(self._digits)
+
+        return ('-' if self._sign == -1 else '') + ''.join([INT_TO_DIGIT[self[i]] for i in range(limit - 1, -1, -1)])
     
     def __int__(self) -> int:
 
@@ -247,14 +250,14 @@ class Number:
                 self -= other
                 return self
 
-            limit = max(len(self._digits), len(other._digits)) + 1
+            limit = Number.MAX_DIGITS if Number.MAX_DIGITS > 0 else max(len(self), len(other)) + 1
             result = [0] * limit
             carry = 0
 
             for i in range(limit):
                 sum = self[i] + other[i] + carry
-                carry = sum // self._base
                 result[i] = sum % self._base
+                carry = sum // self._base
 
             self._digits = result
             self.strip()
@@ -298,7 +301,7 @@ class Number:
                 x = other
                 y = self
 
-            limit = max(len(self._digits), len(other._digits))
+            limit = max(len(self), len(other))
             result = [0] * limit
             borrow = 0
 
@@ -352,10 +355,13 @@ class Number:
     
     def __getitem__(self, index: int) -> int:
 
-        if index >= len(self._digits):
+        if index >= len(self):
             return self.leading_digit()
 
         return self._digits[index]
     
     def __setitem__(self, index: int, value: int) -> None:
         self._digits[index] = value
+
+    def __len__(self) -> int:
+        return len(self._digits)

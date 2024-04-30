@@ -1,0 +1,33 @@
+
+[build-system]
+
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+
+name = "numsys-comp"
+version = "1.0.0"
+description = "Convert between number systems and perform arithmetic."
+readme = "README.md"
+requires-python = ">=3.8"
+license = { file = "LICENSE.txt" }
+keywords = [
+    "math, binary, conversion, arithmetic, numbers, radix, base, number systems, complements",
+]
+authors = [{ name = "Kosta Novosel", email = "novoselkosta@gmail.com" }]
+maintainers = [{ name = "Kosta Novosel", email = "novoselkosta@gmail.com" }]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+
+"Homepage" = "https://github.com/kolexxx/Number-Systems"
+"Bug Reports" = "https://github.com/kolexxx/Number-Systems/issues"
+"Source" = "https://github.com/kolexxx/Number-Systems"
+
+[project.scripts]
+sample = "numsys:main"
