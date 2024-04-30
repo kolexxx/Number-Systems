@@ -19,6 +19,10 @@ class TestNumber(unittest.TestCase):
         num4 = Number(-83, 7, Comp.DRC)
         self.assertEqual(str(num4), '520')
 
+        num5 = Number('6A9', 12)
+        num5.convert_to(12, Comp.RC)
+        self.assertEqual(str(num5), '06A9')
+
     def test_complement(self):
         
         num1 = Number('01101', 2, Comp.DRC)

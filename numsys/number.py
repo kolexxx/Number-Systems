@@ -62,16 +62,18 @@ class Number:
             # in all of our systems.
             if self._sign == 1 and self.leading_digit() == 0:
                 return
-            
-            # We are converting a negative number to a system 
-            # of complements, so we should find it's complement.
-            if self._sign == -1 and prev == Comp.NONE:
+
+            if prev == Comp.NONE:
 
                 if self.leading_digit() != 0:
                     self._digits.append(0)
+            
+                # We are converting a negative number to a system 
+                # of complements, so we should find it's complement.
+                if self._sign == -1:
+                    self._complement_self()
+                    self._sign *= -1
 
-                self._complement_self()
-                self._sign *= -1
                 return
             
             # RC's negative numbers are 'larger' by 1 than DRC's.
